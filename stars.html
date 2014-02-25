@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta chartype="utf-8" />
+    <title>Angular Stars</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.12/angular.min.js"></script>
+    <script>
+    function Cluster(){
+        this.stars = [
+            {name: "40 Eridani A", magnitude: 6.0, temperature: 4900},
+            {name: "40 Eridani B", magnitude: 11.1, temperature: 10000},
+            {name: "40 Eridani C", magnitude: 12.8, temperature: 2940},
+            {name: "61 Cygni A", magnitude: 7.6, temperature: 4130},
+            {name: "61 Cygni B", magnitude: 8.4, temperature: 3870},
+            {name: "70 Ophiuchi A", magnitude: 5.8, temperature: 4950},
+            {name: "70 Ophiuchi B", magnitude: 7.5, temperature: 3870},
+            {name: "Achemar", magnitude: -2.4, temperature: 20500},
+            {name: "Acrux", magnitude: -4.0, temperature: 28000},
+            {name: "Adhara", magnitude: -5.2, temperature: 23000},
+            {name: "AD Leonis", magnitude: 11.0, temperature: 2940},
+            {name: "Aldebaran", magnitude: -0.8, temperature: 4130},
+            {name: "Alhena", magnitude: 0.0, temperature: 9900},
+            {name: "Alioth", magnitude: 0.4, temperature: 9900},
+            {name: "Alkaid", magnitude: -1.7, temperature: 20500},
+            {name: "Al Na'ir", magnitude: -1.1, temperature: 15550},
+            {name: "Alnilam", magnitude: -6.2, temperature: 26950},
+            {name: "Alnitak", magnitude: -5.9, temperature: 33600},
+            {name: "Alpha Centauri A", magnitude: 4.3, temperature: 5840},
+            {name: "AlphaCentauri A", magnitude: 4.3, temperature: 5840},
+            {name: "Alpha Centauri B", magnitude: 5.8, temperature: 4730},
+            {name: "Alpha Centauri B", magnitude: 5.8, temperature: 4900},
+            {name: "Alpha Crucis B", magnitude: -3.3, temperature: 20500},
+            {name: "Altair", magnitude: 2.2, temperature: 8060},
+            {name: "Antares", magnitude: -5.2, temperature: 3340},
+            {name: "Arcturus", magnitude: -0.4, temperature: 4590},
+            {name: "Atria", magnitude: -0.1, temperature: 4590},
+            {name: "Avior", magnitude: -2.1, temperature: 4900},
+            {name: "Barnard's Star", magnitude: 13.2, temperature: 2800},
+            {name: "BD +051668", magnitude: 11.9, temperature: 2800},
+            {name: "BD -124523", magnitude: 12.1, temperature: 2940},
+            {name: "Bellatrix", magnitude: -4.3, temperature: 23000},
+            {name: "Beta Centauri", magnitude: -5.1, temperature: 25500},
+            {name: "Beta Crucis", magnitude: -4.7, temperature: 28000},
+            {name: "Betelgeuse", magnitude: -5.7, temperature: 3200},
+            {name: "Canopus", magnitude: -3.1, temperature: 7400},
+            {name: "Capella", magnitude: -0.6, temperature: 5150},
+            {name: "Castor", magnitude: 1.2, temperature: 9620},
+            {name: "Delta Canis Majoris", magnitude: -8.0, temperature: 6100},
+            {name: "Delta Vulpeculae", magnitude: 0.6, temperature: 9900},
+            {name: "Deneb", magnitude: -7.2, temperature: 9340},
+            {name: "Dubhe", magnitude: 0.2, temperature: 4900},
+            {name: "Elnath", magnitude: -1.6, temperature: 12400},
+            {name: "Epsilon Eridani", magnitude: 6.1, temperature: 4590},
+            {name: "Epsilon Indi", magnitude: 7.0, temperature: 4130},
+            {name: "EV Lacertae", magnitude: 11.7, temperature: 2800},
+            {name: "Fomalhaut", magnitude: 2.0, temperature: 9060},
+            {name: "G51-I5", magnitude: 17.0, temperature: 2500},
+            {name: "Gacrux", magnitude: -0.5, temperature: 3750},
+            {name: "GQ Andromedae", magnitude: 13.4, temperature: 2670},
+            {name: "GX Andromedae", magnitude: 10.4, temperature: 3340},
+            {name: "Hadar", magnitude: -5.3, temperature: 25500},
+            {name: "HD 225213", magnitude: 10.3, temperature: 3200},
+            {name: "HD 93735", magnitude: 10.5, temperature: 3200},
+            {name: "Kapteyn's Star", magnitude: 10.9, temperature: 3480},
+            {name: "Kaus Australis", magnitude: -0.3, temperature: 11000},
+            {name: "Kruger 60 A", magnitude: 11.9, temperature: 2940},
+            {name: "Kruger 60 B", magnitude: 13.3, temperature: 2670},
+            {name: "L726-8 ( A)", magnitude: 15.5, temperature: 2670},
+            {name: "L 789-6", magnitude: 14.5, temperature: 2670},
+            {name: "Lacaille 8760", magnitude: 8.7, temperature: 3340},
+            {name: "Lacaille 9352", magnitude: 9.6, temperature: 3340},
+            {name: "Menkalinan", magnitude: 0.6, temperature: 9340},
+            {name: "Miaplacidus", magnitude: -0.6, temperature: 9300},
+            {name: "Mirfak", magnitude: -4.6, temperature: 7700},
+            {name: "Mirzam", magnitude: -4.8, temperature: 25500},
+            {name: "Peacock", magnitude: -2.3, temperature: 20500},
+            {name: "Polaris", magnitude: -4.6, temperature: 6100},
+            {name: "Pollux", magnitude: 1.0, temperature: 4900},
+            {name: "Procyon A", magnitude: 2.6, temperature: 6580},
+            {name: "Procyon A", magnitude: 2.6, temperature: 6600},
+            {name: "Procyon B", magnitude: 13.0, temperature: 9700},
+            {name: "Proxima Centauri", magnitude: 15.5, temperature: 2670},
+            {name: "Regulus", magnitude: -0.8, temperature: 13260},
+            {name: "Rigel", magnitude: -7.2, temperature: 12140},
+            {name: "Ross 128", magnitude: 13.5, temperature: 2800},
+            {name: "Ross 154", magnitude: 13.1, temperature: 2800},
+            {name: "Ross 248", magnitude: 14.8, temperature: 2670},
+            {name: "Ross 614 A", magnitude: 13.1, temperature: 2800},
+            {name: "Shaula", magnitude: -3.4, temperature: 25500},
+            {name: "Sirius A", magnitude: 1.4, temperature: 9620},
+            {name: "Sirius B", magnitude: 11.2, temperature: 14800},
+            {name: "Spica", magnitude: -3.4, temperature: 25500},
+            {name: "Struve 2398 A", magnitude: 11.2, temperature: 3070},
+            {name: "Struve 2398 B", magnitude: 11.9, temperature: 2940},
+            {name: "Sun", magnitude: 4.8, temperature: 5840},
+            {name: "Tau Ceti", magnitude: 5.7, temperature: 5150},
+            {name: "Theta Scorpii", magnitude: -5.6, temperature: 7400},
+            {name: "TZ Arietis", magnitude: 14.0, temperature: 2800},
+            {name: "UV Ceti (B)", magnitude: 16.0, temperature: 2670},
+            {name: "van Maanen's Star", magnitude: 14.2, temperature: 13000},
+            {name: "Vega", magnitude: 0.5, temperature: 9900},
+            {name: "Wolf 359 (CN Leo)", magnitude: 16.7, temperature: 2670},
+            {name: "Wolf 424 A", magnitude: 15.0, temperature: 2670},
+            {name: "YZ Ceti", magnitude: 14.1, temperature: 2670}
+        ].map(function(details){
+            return new Star(details);
+        });
+    };
+
+    function Star(details){
+        this.temperature = details.temperature;
+        this.magnitude = details.magnitude;
+        this.name = details.name;
+    }
+
+    var Scales = {
+        linear: function(a, b, x, y){
+            var brange = b - a;
+            var yrange = y - x;
+            return function Scale(z){
+                var bottom = z - a;
+                var scaling = bottom / brange;
+                var expansion = scaling * yrange;
+                var position = x + expansion;
+                return position;
+                // return x + (((z + a) / (b - a)) * (y - x));
+            };
+        }
+    };
+
+    function ScaleCtrl(){
+        this.x = Scales.linear(40000, 0, 0, 500);
+        this.y = Scales.linear(-10, 20, 0, 500);
+    }
+
+    </script>
+</head>
+<body ng-app>
+    <svg
+        id="star"
+        width="500"
+        height="500"
+        xmlns="http://www.w3.org/2000/svg"
+        version="1.1"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        ng-controller="ScaleCtrl as scales">
+        <g
+            ng-controller="Cluster as cluster">
+            <circle
+                ng-repeat="star in cluster.stars"
+                ng-attr-cx="{{scales.x(star.temperature)}}"
+                ng-attr-cy="{{scales.y(star.magnitude)}}"
+                r="5" />
+        </g>
+    </svg>
+</body>
+</html>
