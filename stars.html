@@ -131,7 +131,40 @@
     function ScaleCtrl(){
         this.x = Scales.linear(40000, 0, 0, 500);
         this.y = Scales.linear(-10, 20, 0, 500);
+        this.spectroscope = new Spectroscope();
     }
+
+    // Prepare spectroscope for spectrography!
+    function Spectroscope(){
+        this.classes = ['L', 'M', 'K', 'G', 'F', 'A', 'B', 'O'];
+        this.temps = [2000, 3700, 5200, 6000, 7500, 10000, 33000, 999999]
+        this.colors = [ '#d20033', '#ffbd6f', '#ffddb4', '#fff4e8', '#fbf8ff', '#cad8ff', '#aabfff', '#9db4ff' ]
+        this.spectro = [];
+
+        for(var i=0, q=8; i<q; i++){
+            this.spectro.push({
+                "class": this.classes[i],
+                temp: this.temps[i],
+                color: this.colors[i]
+            });
+        }
+    }
+
+    Spectroscope.prototype.color = function(k) {
+        var i = -1, spec = null;
+        do {
+            spec = this.spectro[++i];
+        } while(i < 8 && spec.temp < k);
+        return spec.color || "#000000";
+    };
+
+    Spectroscope.prototype.class = function(k) {
+        var i = -1, spec = null;
+        do {
+            spec = this.spectro[++i];
+        } while(i < 8 && spec.temp < k);
+        return spec.class || "#000000";
+    };
 
     </script>
 </head>
@@ -150,6 +183,7 @@
                 ng-repeat="star in cluster.stars"
                 ng-attr-cx="{{scales.x(star.temperature)}}"
                 ng-attr-cy="{{scales.y(star.magnitude)}}"
+                ng-attr-fill="{{scales.spectroscope.color(star.temperature)}}"
                 r="5" />
         </g>
     </svg>
