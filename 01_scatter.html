@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<!--
+This is a basic scatter plot. Nothing crazy, just some simple JS functions
+acting as data containers around an array of data (the `localCluster`, the
+hundred or so stars closest to Sol), a factory to produce a scaling function,
+and an ng-repeat over the data block.
+
+A Hertzsprung Russel diagram itself is the product of stellar observations.
+As predicted in the early 20th century, a black body will radiate certain
+frequencies of light based on its temperature. It turns out, stellar fusion
+balls are about perfect black bodies, with their color profiles matching
+almost exactly the expected color profile from a black body radiator. The
+magnitude of a star is a measure of its relative luimnosity, or how much light
+it puts out. While there's not intuitive reason those two quantities should
+be related, it turns out they are - almost perfectly. This observation lead
+to the creation of the H-R Diagram in 1910.
+
+In fact, a plot of luminosity/temperature for a large swath of sars reveals
+four distinct regions. With an understanding of stellar fusion, these regions
+map the life cycle of stars. Using the results from an H-R Diagram, an
+astronomer can determine the age, likely metalicity, and a host of other
+properties about a star and its life. We'll explore some of those properties
+as we explore how to build an Angular charting and graphing tool.
+
+The first sample we have here is a scatter plot. This is a simple example of
+throwing a hundred circles into an SVG element, and positioning them correctly.
+Because our data model is the world of physical properties (namely, the magnitude
+and temperature of a flaming ball of fusion), we need some bit of arithmetic to
+handle determining the correct (x, y) values on the screen from the range of
+values in the input data model.
+
+-->
+<html>
+<head>
+    <meta chartype="utf-8" />
+    <title>Angular to the Stars</title>
+    <script src="angular.min.js"></script>
+    <script>
+    var localCluster = [
+        {name: "40 Eridani A", magnitude: 6.0, temperature: 4900},
+        {name: "40 Eridani B", magnitude: 11.1, temperature: 10000},
+        {name: "40 Eridani C", magnitude: 12.8, temperature: 2940},
+        {name: "61 Cygni A", magnitude: 7.6, temperature: 4130},
+        {name: "61 Cygni B", magnitude: 8.4, temperature: 3870},
+        {name: "70 Ophiuchi A", magnitude: 5.8, temperature: 4950},
+        {name: "70 Ophiuchi B", magnitude: 7.5, temperature: 3870},
+        {name: "Achemar", magnitude: -2.4, temperature: 20500},
+        {name: "Acrux", magnitude: -4.0, temperature: 28000},
+        {name: "Adhara", magnitude: -5.2, temperature: 23000},
+        {name: "AD Leonis", magnitude: 11.0, temperature: 2940},
+        {name: "Aldebaran", magnitude: -0.8, temperature: 4130},
+        {name: "Alhena", magnitude: 0.0, temperature: 9900},
+        {name: "Alioth", magnitude: 0.4, temperature: 9900},
+        {name: "Alkaid", magnitude: -1.7, temperature: 20500},
+        {name: "Al Na'ir", magnitude: -1.1, temperature: 15550},
+        {name: "Alnilam", magnitude: -6.2, temperature: 26950},
+        {name: "Alnitak", magnitude: -5.9, temperature: 33600},
+        {name: "Alpha Centauri A", magnitude: 4.3, temperature: 5840},
+        {name: "AlphaCentauri A", magnitude: 4.3, temperature: 5840},
+        {name: "Alpha Centauri B", magnitude: 5.8, temperature: 4730},
+        {name: "Alpha Centauri B", magnitude: 5.8, temperature: 4900},
+        {name: "Alpha Crucis B", magnitude: -3.3, temperature: 20500},
+        {name: "Altair", magnitude: 2.2, temperature: 8060},
+        {name: "Antares", magnitude: -5.2, temperature: 3340},
+        {name: "Arcturus", magnitude: -0.4, temperature: 4590},
+        {name: "Atria", magnitude: -0.1, temperature: 4590},
+        {name: "Avior", magnitude: -2.1, temperature: 4900},
+        {name: "Barnard's Star", magnitude: 13.2, temperature: 2800},
+        {name: "BD +051668", magnitude: 11.9, temperature: 2800},
+        {name: "BD -124523", magnitude: 12.1, temperature: 2940},
+        {name: "Bellatrix", magnitude: -4.3, temperature: 23000},
+        {name: "Beta Centauri", magnitude: -5.1, temperature: 25500},
+        {name: "Beta Crucis", magnitude: -4.7, temperature: 28000},
+        {name: "Betelgeuse", magnitude: -5.7, temperature: 3200},
+        {name: "Canopus", magnitude: -3.1, temperature: 7400},
+        {name: "Capella", magnitude: -0.6, temperature: 5150},
+        {name: "Castor", magnitude: 1.2, temperature: 9620},
+        {name: "Delta Canis Majoris", magnitude: -8.0, temperature: 6100},
+        {name: "Delta Vulpeculae", magnitude: 0.6, temperature: 9900},
+        {name: "Deneb", magnitude: -7.2, temperature: 9340},
+        {name: "Dubhe", magnitude: 0.2, temperature: 4900},
+        {name: "Elnath", magnitude: -1.6, temperature: 12400},
+        {name: "Epsilon Eridani", magnitude: 6.1, temperature: 4590},
+        {name: "Epsilon Indi", magnitude: 7.0, temperature: 4130},
+        {name: "EV Lacertae", magnitude: 11.7, temperature: 2800},
+        {name: "Fomalhaut", magnitude: 2.0, temperature: 9060},
+        {name: "G51-I5", magnitude: 17.0, temperature: 2500},
+        {name: "Gacrux", magnitude: -0.5, temperature: 3750},
+        {name: "GQ Andromedae", magnitude: 13.4, temperature: 2670},
+        {name: "GX Andromedae", magnitude: 10.4, temperature: 3340},
+        {name: "Hadar", magnitude: -5.3, temperature: 25500},
+        {name: "HD 225213", magnitude: 10.3, temperature: 3200},
+        {name: "HD 93735", magnitude: 10.5, temperature: 3200},
+        {name: "Kapteyn's Star", magnitude: 10.9, temperature: 3480},
+        {name: "Kaus Australis", magnitude: -0.3, temperature: 11000},
+        {name: "Kruger 60 A", magnitude: 11.9, temperature: 2940},
+        {name: "Kruger 60 B", magnitude: 13.3, temperature: 2670},
+        {name: "L726-8 ( A)", magnitude: 15.5, temperature: 2670},
+        {name: "L 789-6", magnitude: 14.5, temperature: 2670},
+        {name: "Lacaille 8760", magnitude: 8.7, temperature: 3340},
+        {name: "Lacaille 9352", magnitude: 9.6, temperature: 3340},
+        {name: "Menkalinan", magnitude: 0.6, temperature: 9340},
+        {name: "Miaplacidus", magnitude: -0.6, temperature: 9300},
+        {name: "Mirfak", magnitude: -4.6, temperature: 7700},
+        {name: "Mirzam", magnitude: -4.8, temperature: 25500},
+        {name: "Peacock", magnitude: -2.3, temperature: 20500},
+        {name: "Polaris", magnitude: -4.6, temperature: 6100},
+        {name: "Pollux", magnitude: 1.0, temperature: 4900},
+        {name: "Procyon A", magnitude: 2.6, temperature: 6580},
+        {name: "Procyon A", magnitude: 2.6, temperature: 6600},
+        {name: "Procyon B", magnitude: 13.0, temperature: 9700},
+        {name: "Proxima Centauri", magnitude: 15.5, temperature: 2670},
+        {name: "Regulus", magnitude: -0.8, temperature: 13260},
+        {name: "Rigel", magnitude: -7.2, temperature: 12140},
+        {name: "Ross 128", magnitude: 13.5, temperature: 2800},
+        {name: "Ross 154", magnitude: 13.1, temperature: 2800},
+        {name: "Ross 248", magnitude: 14.8, temperature: 2670},
+        {name: "Ross 614 A", magnitude: 13.1, temperature: 2800},
+        {name: "Shaula", magnitude: -3.4, temperature: 25500},
+        {name: "Sirius A", magnitude: 1.4, temperature: 9620},
+        {name: "Sirius B", magnitude: 11.2, temperature: 14800},
+        {name: "Spica", magnitude: -3.4, temperature: 25500},
+        {name: "Struve 2398 A", magnitude: 11.2, temperature: 3070},
+        {name: "Struve 2398 B", magnitude: 11.9, temperature: 2940},
+        {name: "Sun", magnitude: 4.8, temperature: 5840},
+        {name: "Tau Ceti", magnitude: 5.7, temperature: 5150},
+        {name: "Theta Scorpii", magnitude: -5.6, temperature: 7400},
+        {name: "TZ Arietis", magnitude: 14.0, temperature: 2800},
+        {name: "UV Ceti (B)", magnitude: 16.0, temperature: 2670},
+        {name: "van Maanen's Star", magnitude: 14.2, temperature: 13000},
+        {name: "Vega", magnitude: 0.5, temperature: 9900},
+        {name: "Wolf 359 (CN Leo)", magnitude: 16.7, temperature: 2670},
+        {name: "Wolf 424 A", magnitude: 15.0, temperature: 2670},
+        {name: "YZ Ceti", magnitude: 14.1, temperature: 2670}
+    ];
+
+    /**
+     * A Cluster of stars is a container for a bunch of `Star`s.
+     */
+    function Cluster(starList){
+        this.stars = starList.map(function(details){
+            return new Star(details);
+        });
+    };
+
+    /**
+     * The LocalCluster is a star Cluster of the 100 or so stars closest
+     * to the solar system.
+     */
+    function LocalCluster(){
+        Cluster.call(this, localCluster);
+    }
+    LocalCluster.prototype = Object.create(Cluster.prototype);
+
+    /**
+     * A Star has some details about a particular star - we might extend
+     * this later to return more interesting, derived details.
+     */
+    function Star(details){
+        this.temperature = details.temperature;
+        this.magnitude = details.magnitude;
+        this.name = details.name;
+    }
+
+    /**
+     * Scales is a namespace for a group of functions that can move a number
+     * between ranges of other numbers.
+     *
+     * A linear scaling is the most straight forward, satisfying the
+     * arithmetic expression `v = x + (((z + a) / (b - a)) * (y - x))`
+     * where (a, b) is the domain, (x, y) is the range, z is the unscaled
+     * input value, and v is the scaled final value.
+     */
+    var Scales = {
+        linear: function(a, b, x, y){
+            // Cache the range calculations.
+            var brange = b - a;
+            var yrange = y - x;
+            return function Scale(z){
+                var bottom = z - a;
+                var scaling = bottom / brange;
+                var expansion = scaling * yrange;
+                var position = x + expansion;
+                return position;
+            };
+        }
+    };
+
+    /**
+     * Our graph needs two scales, at this point - one for the temperatures,
+     * which by H-R convention are on the X axis, highest to the left. This
+     * makes the X domain (40000, 0) (our hottest star, Alnitak, is 33600
+     * degrees kelvin; the coolest, G51-I5, is 2500K with a group of friends
+     * at 2670K). The Y domain is (-10, 20) - magnitude values are already
+     * a log computation against one another, with every 5 orders of magnitude
+     * being 100 times as bright. So, if Antares (-5.2) were at the same
+     * distance from an observer as Arcturus (-0.4), Antares would be just a
+     * shade less than 100 times brighter than Arcturus.
+     *
+     * Both ranges are 0 to 500, since our SVG is hard-set to 500x500px.
+     */
+    var GraphScale = function(){
+        this.x = Scales.linear(40000, 0, 0, 500);
+        this.y = Scales.linear(-10, 20, 0, 500);
+    }
+
+    </script>
+</head>
+<body ng-app>
+    <!-- The angular part. Like the html5 doctype, you need none of the xmlns bs. -->
+    <svg
+        id="star"
+        width="500"
+        height="500"
+        style="background: black;"
+        ng-controller="GraphScale as scales"
+    >
+        <!-- Use an svg <g> "group" element - this is equvalent to a <div> in HTML. -->
+        <g
+            ng-controller="LocalCluster as cluster">
+            <!--
+                A <circle> is, you guessed it, a circle with center (cx, cy) and radius r.
+                Here, though, we have to use the ng-{attr} form of the directive, because
+                SVG is much less forgiving than HTML for invalid attribute values, and
+                the {{star.temperature}} expressions will cause a parse error long before
+                Angular has a change to dig in to the [ng-app].
+            -->
+            <circle
+                ng-repeat="star in cluster.stars"
+                ng-attr-cx="{{ scales.x(star.temperature) }}"
+                ng-attr-cy="{{ scales.y(star.magnitude) }}"
+                fill="orange"
+                r="5"
+            />
+        </g>
+    </svg>
+</body>
+</html>
