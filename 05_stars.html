@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<!--
+
+The stars we have here are super flat... This update just adds a filter to them.
+
+-->
+<html>
+<head>
+    <meta chartype="utf-8" />
+    <title>Angular to the Stars</title>
+    <link type="text/css" rel="stylesheet" href="style.css" />
+    <script src="angular.min.js"></script>
+    <script src="localCluster.js"></script>
+    <!-- Pull out all the same JS -->
+    <script src="cluster.js"></script>
+    <script src="scales.js"></script>
+    <script src="hertzRuss.js"></script>
+</head>
+<body ng-app="HertzRuss">
+    <svg
+        id="star"
+    >
+        <defs>
+            <!-- The Glow filter makes a circle look like a star. The glow itself will extend
+            quite a bit beyond the circle, so use the rectilinear filter attributes to make
+            the filter region extend wide enough to not cut anything off. -->
+            <filter id="glow" x="-100%" y="-100%" width="300%" height="300%">
+                <!--
+                    Lightly blur the source image; this also blurs alpha,
+                    giving us a spherish shape to use as a bump map for the specular lighting.
+                -->
+                <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="lightBlur" />
+
+                <!-- Apply some lighting to the sphere. -->
+                <feSpecularLighting
+                    surfaceScale="64" specularConstant=".25"
+                    specularExponent="16" lighting-color="#bbbbbb"
+                    in="lightBlur" result="highlight"
+                >
+                    <fePointLight x="0" y="0" z="20000"/>
+                </feSpecularLighting>
+
+                <!-- Clip the specular highlight to inside the source image only -->
+                <feComposite
+                    in="highlight" in2="SourceAlpha"
+                    operator="in" result="highlight"
+                />
+
+                <!-- Add the highlight to the image. -->
+                <feComposite
+                    in="SourceGraphic" in2="highlight"
+                    operator="arithmetic" k1="0" k2="1" k3="1" k4="0"
+                    result="highlighted"
+                />
+
+                <!-- Merge the original blur with the highlighted image -->
+                <feComposite
+                    in="highlighted" in2="lightBlur"
+                    operator="arithmetic" k1="1" k2="1" k3="1" k4="0"
+                    result="star"
+                />
+
+                <!-- Create an outer blur, for the star's corona. -->
+                <feGaussianBlur in="star" result="corona" stdDeviation="20" />
+                <feComposite in="corona" in2="SourceGraphic" operator="out" result="corona" />
+                <!-- TODO add some turbulence here? That's expensive... -->
+                <feComposite
+                    in="star" in2="corona"
+                    operator="arithmetic" k1="1" k2="1" k3="1" k4="0"
+                    result="star"
+                />
+            </filter>
+        </defs>
+
+        <g ng-controller="LocalCluster as cluster"
+            ngvg-scale="{
+                x: ['log', 35000, 2300],
+                y: ['linear', -10, 20],
+                color: ['threshold',
+                    [        3700,     5200,     6000,     7500,    10000,    23000,   34000],
+                    ['#d20033','#ffbd6f','#ffddb4','#fff4e8','#fbf8ff','#cad8ff','#aabfff','#9db4ff']
+                ],
+                size: ['linear', 2.35e-7, 2.09932e-4, 3, 30]
+            }">
+            <circle ng-repeat="star in cluster.stars"
+
+                ng-attr-cx="{{ star.temperature | scale:$scales.x }}"
+                ng-attr-cy="{{ star.magnitude | scale:$scales.y }}"
+                ng-attr-fill="{{ star.temperature | scale:$scales.color }}"
+                ng-attr-r="{{ star.size() | scale:$scales.size }}"
+
+                filter="url(#glow)"
+            />
+            <!-- Use the filter. -->
+        </g>
+    </svg>
+</body>
+</html>
