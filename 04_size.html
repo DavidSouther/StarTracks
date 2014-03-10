@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<!--
+
+Our stars have a more appropriate color, but this still isn't quite enough.
+Stars differ massively in size (with their size coming directly from their
+mass? heh... enough star puns). Their size, interstingly, is almost perfectly
+predicted by their temperature and luminosity. Stars towards the upper right
+of the H-R diagram are larger than those below or to the left of their peers.
+Let's add some indicator like that to our diagram.
+
+-->
+<html>
+<head>
+    <meta chartype="utf-8" />
+    <title>Angular to the Stars</title>
+    <link type="text/css" rel="stylesheet" href="style.css" />
+    <script src="angular.min.js"></script>
+    <script src="localCluster.js"></script>
+    <script>
+    // Half the work in this change is in updating the simulation code.
+    function Cluster(starList){
+        this.stars = starList.map(function(details){
+            return new Star(details);
+        });
+    };
+
+    function LocalCluster(){
+        Cluster.call(this, localCluster);
+    }
+
+    // Little helper to move values slightly.
+    function fidget(num){
+        var tenthNum = num * 0.1;
+        var halfTenthNum = tenthNum * 0.5;
+        return num + ((Math.random() * tenthNum) - halfTenthNum);
+    }
+
+    function Star(details){
+        // The data we have is really static, coming from observations of
+        // a very specific set of a hundred stars. Taking artistic license,
+        // we'll fidget their values slightly to make the image more
+        // interesting. In a couple steps, we'll replace the hard-coded values
+        // with an actual time-based diffeq simulation.
+        this.temperature = fidget(details.temperature);
+        this.magnitude = fidget(details.magnitude);
+        this.name = details.name;
+    }
+
+    /*
+     * A star's luminosity is the measure, in wattage, of the amount of light
+     * a star puts out. We can calculate that from the magnitude.
+     */
+    Star.prototype.luminosity = function(){
+        /* Luminosity from magnitude, assuming constant distance. */
+        // http://en.wikipedia.org/wiki/Luminosity#Magnitude
+        return Math.pow(Math.E, ((this.magnitude + 2.72)/-2.5));
+    };
+
+    /*
+     * A star's radius is proportional the square root of the ratio
+     * of the luminosity to the fourth power of temperature. (It's stellar
+     * nuclear physics, I don't know exactly why.)
+    */
+    Star.prototype.size = (function(){
+        var STEFAN_BOLTZMAN_CONSTANT = 5.670373e-8
+        var CONSTANT = 4 * Math.PI * STEFAN_BOLTZMAN_CONSTANT
+        // var CONSTANT = 1;
+        return function(){
+            /* The size follows this formula. */
+            // http://en.wikipedia.org/wiki/Main_sequence#Parameters
+            // R = sqrt(L / 4 pi sig T ^ 4)
+            var radius = Math.sqrt((this.luminosity()) / (CONSTANT * Math.pow(this.temperature, 4)))
+            // return ((this.magnitude + 10)/ 30) * (this.temperature / 40000);
+            return radius;
+        };
+    }());
+
+
+    /**
+     * Adding new scales.
+     *
+     */
+    var Scales = {
+        linear: function(a, b, x, y){
+            var brange = b - a;
+            var yrange = y - x;
+            return function Scale(z){
+                var bottom = z - a;
+                var scaling = bottom / brange;
+                var expansion = scaling * yrange;
+                var position = x + expansion;
+                return position;
+            };
+        },
+        // It turns out, most quantized (continuous value scales)
+        // are just a linear scale with some function applied to the
+        // input and domain. For a linear scale, that's Log_b. For
+        // this simulation, b = 10.
+        log: function(a, b, x, y){
+            function log10(z){
+                return Math.log(z) / Math.LN10;
+            }
+            var linA = a == 0 ? 0 : log10(a);
+            var linB = b == 0 ? 0 : log10(b);
+            linear = Scales.linear(linA, linB, x, y);
+            return function Scale(z){
+                return linear(log10(z));
+            }
+        },
+        threshold: function(domain, range){
+            var buckets = domain.length;
+            return function FindThreshold(z){
+                var i = -1, x = null;
+                do {
+                    x = domain[++i];
+                } while(i < domain.length && x < z);
+                return range[i];
+            }
+        }
+    };
+    </script>
+    <script src="hertzRuss.js"></script>
+</head>
+<body ng-app="HertzRuss">
+    <svg
+        id="star"
+    >
+        <!-- Switching the X plot to a log scale makes the diagram look nicer. -->
+        <g ng-controller="LocalCluster as cluster"
+            ngvg-scale="{
+                x: ['log', 35000, 2300],
+                y: ['linear', -10, 20],
+                color: ['threshold',
+                    [        3700,     5200,     6000,     7500,    10000,    23000,   34000],
+                    ['#d20033','#ffbd6f','#ffddb4','#fff4e8','#fbf8ff','#cad8ff','#aabfff','#9db4ff']
+                ],
+                size: ['linear', 2.35e-7, 2.09932e-4, 3, 30]
+            }">
+            <!-- Add the size scale, using values from the simulation. -->
+            <!-- Eg max and min of -->
+            <!-- (new LocalCluster()).stars.sort(function(a, b){return a - b;}) -->
+            <circle ng-repeat="star in cluster.stars"
+
+                ng-attr-cx="{{ star.temperature | scale:$scales.x }}"
+                ng-attr-cy="{{ star.magnitude | scale:$scales.y }}"
+                ng-attr-fill="{{ star.temperature | scale:$scales.color }}"
+
+                ng-attr-r="{{ star.size() | scale:$scales.size }}"
+            />
+        </g>
+    </svg>
+</body>
+</html>
