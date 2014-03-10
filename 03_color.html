@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<!--
+
+With resizing and a full screen picture, we can now add color to our images.
+The color of a star is determined almost solely by its color. This, again, is
+a consequence of the star being an almost perfect black-body radiator. To do
+this kind of transformation, we need a new type of scale.
+
+-->
+<html>
+<head>
+    <meta chartype="utf-8" />
+    <title>Angular to the Stars</title>
+    <link type="text/css" rel="stylesheet" href="style.css" />
+    <script src="angular.min.js"></script>
+    <script src="localCluster.js"></script>
+    <script>
+    function Cluster(starList){
+        this.stars = starList.map(function(details){
+            return new Star(details);
+        });
+    };
+
+    function LocalCluster(){
+        Cluster.call(this, localCluster);
+    }
+
+    function Star(details){
+        this.temperature = details.temperature;
+        this.magnitude = details.magnitude;
+        this.name = details.name;
+    }
+
+    /**
+     * Adding new scales.
+     *
+     * A scale will be called with 4 parameters:
+     * [domain min, domain max, range min, range max]
+     * IF a scale needs fewer, eg an array for domain and range,
+     * pack the arguments list as
+     * [domain, range, undefined, undefined]
+     *
+     * The `threshold` scale takes a domain of length N, and a
+     * quantized range whose values will be used for any input
+     * value bucketed between values in the domain array.
+     *
+     * See the example colors scale below.
+     */
+    var Scales = {
+        linear: function(a, b, x, y){
+            var brange = b - a;
+            var yrange = y - x;
+            return function Scale(z){
+                var bottom = z - a;
+                var scaling = bottom / brange;
+                var expansion = scaling * yrange;
+                var position = x + expansion;
+                return position;
+            };
+        },
+        threshold: function(domain, range){
+            var buckets = domain.length;
+            return function FindThreshold(z){
+                var i = -1, x = null;
+                do {
+                    x = domain[++i];
+                } while(i < domain.length && x < z);
+                return range[i];
+            }
+        }
+    };
+
+    </script>
+    <!-- Moved the angular stuff from last branch out. -->
+    <script type="text/javascript" src="hertzRuss.js"></script>
+</head>
+<body ng-app="HertzRuss">
+    <svg
+        id="star"
+    >
+        <g ng-controller="LocalCluster as cluster"
+            ngvg-scale="{
+                x: ['linear', 40000, 0],
+                y: ['linear', -10, 20],
+                color: ['threshold',
+                    [        3700,     5200,     6000,     7500,    10000,    23000,   34000],
+                    ['#d20033','#ffbd6f','#ffddb4','#fff4e8','#fbf8ff','#cad8ff','#aabfff','#9db4ff']
+                ]
+            }">
+            <!-- The color is a threshold scale - anything up to but less than a number in the top
+            array will get the value from the corresponding position in the bottom array. -->
+            <circle ng-repeat="star in cluster.stars"
+
+                ng-attr-cx="{{ star.temperature | scale:$scales.x }}"
+                ng-attr-cy="{{ star.magnitude | scale:$scales.y }}"
+
+                ng-attr-fill="{{ star.temperature | scale:$scales.color }}"
+
+                r="5"
+            />
+        </g>
+    </svg>
+</body>
+</html>
