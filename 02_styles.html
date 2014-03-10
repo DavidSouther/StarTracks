@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<!--
+
+We're going to take a hard turn into solid data-vis land. Our scatter plot looks
+like there's clearly data in it, but a big piece of data vis is the aesthetic,
+nearly artistic quality of presenting information.
+
+Let's start with something easy - make the image full screen!
+
+To achieve this, we need (A) some way to make the <svg> fill the entire screen,
+(B) some way for the scale functions to work on the current image bounds, and
+(C) some way to change the current bounds.
+
+-->
+<html>
+<head>
+    <meta chartype="utf-8" />
+    <title>Angular to the Stars</title>
+    <!-- (A) We achieve with CSS, declaring the image to be the full height and
+    width of the viewport. -->
+    <style type="text/css">
+
+    /* No margin, full viewport height, keep the black background. */
+    body {
+        margin: 0;
+    }
+
+    body, svg {
+        height: 100%;
+        width: 100%;
+        background-color: black;
+    }
+    </style>
+    <script src="angular.min.js"></script>
+
+    <!-- Pull the data out, it just takes up space. Get it? -->
+    <script src="localCluster.js"></script>
+
+    <script>
+    // This is the same StarCluster data model.
+    function Cluster(starList){
+        this.stars = starList.map(function(details){
+            return new Star(details);
+        });
+    };
+
+    function LocalCluster(){
+        Cluster.call(this, localCluster);
+    }
+
+    function Star(details){
+        this.temperature = details.temperature;
+        this.magnitude = details.magnitude;
+        this.name = details.name;
+    }
+
+    // Same scaling function.
+    var Scales = {
+        linear: function(a, b, x, y){
+            var brange = b - a;
+            var yrange = y - x;
+            return function Scale(z){
+                var bottom = z - a;
+                var scaling = bottom / brange;
+                var expansion = scaling * yrange;
+                var position = x + expansion;
+                return position;
+            };
+        }
+    };
+
+    // We remove the GraphScales function in favor of having a directive manage
+    // the scales. See below in the comments on ngvgScale.
+    angular.module("HertzRuss", [])
+    .run(function($window, $rootScope){
+        /* Do angular things when the window resizes. */
+        $window.onresize = function(){
+            $rootScope.$broadcast('Window Resized');
+            $rootScope.$digest();
+        }
+    })
+    /**
+     * The scale filter works a bit better than just calling scale on everything.
+     * The filter takes a reference to a scope function that will scale the value
+     * appropriately.
+     */
+    .filter('scale', function(){
+        return function Scale(value, scale){
+            return scale(value);
+        }
+    })
+    /**
+     * The scale directive manages a property, $scope.$scales, which contains
+     * scales for x, y, and other properties based on a given expression.
+     *
+     * The expression should return an object, with keys tied to the name
+     * of the scale, and values being an array for the parameters of the scale.
+     * The first array value is the name of the scale, in `Scales`, to call.
+     * The rest of the params are passed as parameters.
+     *
+     * The keys `x` and `y` have special behavior, by filling in the range
+     * of the scale with (0, width) and (0, height) respectively. Otherwise,
+     * the parameters are [scale, domain min, domain max, range min, range max]
+     */
+    .directive('ngvgScale', function($parse){
+        return {
+            link: function($scope, $element, attrs){
+                var setScales = (function setScales(){
+                    // Get the bounds of the parent element
+                    var height = $element[0].parentNode.offsetHeight;
+                    var width = $element[0].parentNode.offsetWidth;
+
+                    // Reset the scales
+                    $scope.$scales = {};
+
+                    // Evaluate the expression to get the scale params
+                    var scales = $parse(attrs['ngvgScale'])();
+                    for (var name in scales) { // Iterate the object
+                        var scale = scales[name];
+                        // The scale object is an array
+                        var type = scale.shift();
+                        var maxima = 0, minima = 0;
+                        // Not as fancy as it looks, just sets default values for x, y
+                        if (name == "x" || name == "y"){
+                            var maxima = {
+                                x: width,
+                                y: height
+                            }[name] || scale[2] || ((width + height) / 2);
+                        } else {
+                            minima = scale[2];
+                            maxima = scale[3];
+                        }
+                        // Assign the scale.
+                        $scope.$scales[name] = Scales[type](scale[0], scale[1], minima, maxima);
+                    }
+                    return arguments.callee;
+                }());
+                // Redo the scales every window resize.
+                $scope.$on('Window Resized', setScales);
+            }
+        }
+    })
+    ;
+
+    </script>
+</head>
+<body ng-app="HertzRuss">
+    <svg
+        id="star"
+    >
+        <!-- The scale parameters we want to use, same as GraphScale before. -->
+        <g ng-controller="LocalCluster as cluster"
+            ngvg-scale="{
+                x: ['linear', 40000, 0],
+                y: ['linear', -10, 20]
+            }">
+            <!-- Using the new scoped scales. -->
+            <circle ng-repeat="star in cluster.stars"
+
+                ng-attr-cx="{{ star.temperature | scale:$scales.x }}"
+                ng-attr-cy="{{ star.magnitude | scale:$scales.y }}"
+
+                fill="orange"
+                r="5" />
+        </g>
+    </svg>
+</body>
+</html>
