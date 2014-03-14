@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<!--
+
+The glow doesn't quite work for all the stars, but we've got that awesome quantized scale...
+
+-->
+<html>
+<head>
+    <meta chartype="utf-8" />
+    <title>Angular to the Stars</title>
+    <link type="text/css" rel="stylesheet" href="style.css" />
+    <script src="angular.min.js"></script>
+    <script src="localCluster.js"></script>
+    <!-- Pull out all the same JS -->
+    <script src="cluster.js"></script>
+    <script src="scales.js"></script>
+    <script src="hertzRuss.js"></script>
+</head>
+<body ng-app="HertzRuss">
+    <svg
+        id="star"
+        version="1.1"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+    >
+        <defs>
+            <use xlink:href="filters.svg#glow"></use>
+
+            <filter id="glow_large" x="-100%" y="-100%" width="300%" height="300%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="16" result="lightBlur" />
+                <feSpecularLighting
+                    surfaceScale="32" specularConstant=".25"
+                    specularExponent="4" lighting-color="#bbbbbb"
+                    in="lightBlur" result="highlight"
+                >
+                    <fePointLight x="0" y="0" z="1000"/>
+                </feSpecularLighting>
+                <feComposite in="highlight" in2="SourceAlpha" operator="in" result="highlight" />
+                <feComposite in="SourceGraphic" in2="highlight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="highlighted"/>
+                <feComposite in="highlighted" in2="lightBlur" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="star"/>
+                <feGaussianBlur in="star" result="corona" stdDeviation="32" />
+                <feComposite in="corona" in2="SourceGraphic" operator="out" result="corona" />
+                <feComposite in="star" in2="corona" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="star" />
+            </filter>
+
+            <filter id="glow_medium" x="-100%" y="-100%" width="300%" height="300%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="lightBlur" />
+                <feSpecularLighting
+                    surfaceScale="32" specularConstant=".25"
+                    specularExponent="4" lighting-color="#999999"
+                    in="lightBlur" result="highlight"
+                >
+                    <fePointLight x="0" y="0" z="1000"/>
+                </feSpecularLighting>
+                <feComposite in="highlight" in2="SourceAlpha" operator="in" result="highlight"
+                />
+                <feComposite in="SourceGraphic" in2="highlight" operator="arithmetic" k1="1" k2="1" k3="1" k4="0" result="highlighted"/>
+                <feComposite in="highlighted" in2="lightBlur" operator="arithmetic" k1="1" k2="1" k3="1" k4="0" result="star"/>
+                <feGaussianBlur in="star" result="corona" stdDeviation="4" />
+                <feComposite in="corona" in2="SourceGraphic" operator="out" result="corona" />
+                <feComposite in="star" in2="corona" operator="arithmetic" k1="1" k2="1" k3="1" k4="0" result="star"
+                />
+            </filter>
+
+            <filter id="glow_small" x="-100%" y="-100%" width="300%" height="300%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="lightBlur" />
+                <feSpecularLighting
+                    surfaceScale="8" specularConstant=".1"
+                    specularExponent="2" lighting-color="#ddddff"
+                    in="lightBlur" result="highlight"
+                >
+                    <fePointLight x="0" y="0" z="20000"/>
+                </feSpecularLighting>
+                <feComposite in="highlight" in2="SourceAlpha" operator="in" result="highlight"
+                />
+                <feComposite in="SourceGraphic" in2="highlight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="highlighted"/>
+                <feComposite in="highlighted" in2="lightBlur" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="star"/>
+
+                <feGaussianBlur in="star" result="corona" stdDeviation="2" />
+                <feComposite in="corona" in2="SourceGraphic" operator="out" result="corona" />
+                <feComposite in="star" in2="corona" operator="arithmetic" k1="1" k2="1" k3="1" k4="0" result="star"
+                />
+            </filter>
+        </defs>
+
+        <g ng-controller="LocalCluster as cluster"
+            ngvg-scale="{
+                x: ['log', 35000, 2300],
+                y: ['linear', -10, 20],
+                color: ['threshold',
+                    [        3700,     5200,     6000,     7500,    10000,    23000,   34000],
+                    ['#d20033','#ffbd6f','#ffddb4','#fff4e8','#fbf8ff','#cad8ff','#aabfff','#9db4ff']
+                ],
+                size: ['linear', 2.35e-7, 2.09932e-4, 3, 30],
+                filter: [ 'threshold',
+                    [ 1e-5, 1e-4 ], ['small', 'medium', 'large']
+                ]
+            }">
+            <circle ng-repeat="star in cluster.stars"
+
+                ng-attr-cx="{{ star.temperature | scale:$scales.x }}"
+                ng-attr-cy="{{ star.magnitude | scale:$scales.y }}"
+                ng-attr-fill="{{ star.temperature | scale:$scales.color }}"
+                ng-attr-r="{{ star.size() | scale:$scales.size }}"
+
+                ng-attr-filter="url(#glow_{{ star.size() | scale:$scales.filter }})"
+            />
+            <!-- Use the filter. -->
+        </g>
+    </svg>
+</body>
+</html>
