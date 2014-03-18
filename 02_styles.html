@@ -102,7 +102,7 @@ To achieve this, we need (A) some way to make the <svg> fill the entire screen,
      * of the scale with (0, width) and (0, height) respectively. Otherwise,
      * the parameters are [scale, domain min, domain max, range min, range max]
      */
-    .directive('ngvgScale', function($parse){
+    .directive('trackScale', function($parse){
         return {
             link: function($scope, $element, attrs){
                 var setScales = (function setScales(){
@@ -114,7 +114,7 @@ To achieve this, we need (A) some way to make the <svg> fill the entire screen,
                     $scope.$scales = {};
 
                     // Evaluate the expression to get the scale params
-                    var scales = $parse(attrs['ngvgScale'])();
+                    var scales = $parse(attrs['trackScale'])();
                     for (var name in scales) { // Iterate the object
                         var scale = scales[name];
                         // The scale object is an array
@@ -150,7 +150,7 @@ To achieve this, we need (A) some way to make the <svg> fill the entire screen,
     >
         <!-- The scale parameters we want to use, same as GraphScale before. -->
         <g ng-controller="LocalCluster as cluster"
-            ngvg-scale="{
+            track-scale="{
                 x: ['linear', 40000, 0],
                 y: ['linear', -10, 20]
             }">

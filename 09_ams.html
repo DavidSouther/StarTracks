@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<!--
+
+This is a nice, if static, image. Let's improve our simulation.
+
+-->
+<html>
+<head>
+    <meta chartype="utf-8" />
+    <title>Angular to the Stars</title>
+    <link type="text/css" rel="stylesheet" href="style.css" />
+    <script src="angular.min.js"></script>
+    <script src="tracks.js"></script>
+    <script src="d3.stolen.js"></script>
+    <script>
+        /**
+         * The new Cluster has main sequence stars, probably about 3/4s.
+         * In this simulation, Main Sequence stars are Hydreogen burning,
+         * betwen about 0.5 and 55 solar masses (though 55 solar mass stars
+         * in the universe are more likely to end up as giants than stay
+         * on the AMS). Because they are "Average", this is the "Average
+         * Main Sequence".
+         */
+        function Cluster(starCount){
+            starCount = starCount || 200;
+            var sunsCount = starCount * 0.75;
+            var dwarfsCount = starCount * 0.2
+            var giantsCount = starCount * 0.05;
+            this.stars = [];
+            while(sunsCount-- > 0){
+                this.stars.push(new HydrogenStar());
+            }
+        };
+
+        function fidget(num, base){
+            base = base || Math.random();
+            var tenthNum = num * 0.1;
+            var halfTenthNum = tenthNum * 0.5;
+            return num + ((base * tenthNum) - halfTenthNum);
+        }
+
+        // poor-man's gaussian - since a gaussian is the sum of random trials!
+        function rnd_snd() {return (Math.random()*2-1)+(Math.random()*2-1)+(Math.random()*2-1); }
+        function rnd(mean, stdev) {return rnd_snd() * stdev + mean; }
+        // Poor-man's power-law.
+        function rnd_pnd() {return (Math.random()*2-1)*(Math.random()*2-1)*(Math.random()*2-1); }
+        function prnd(mean, stdev) {return rnd_pnd() * stdev + mean; }
+
+        /**
+         * Our new Star base class starts with an initial mass, and sets
+         * some random parameters for itself.
+         */
+        function Star(iMass){
+            this.iMass = iMass;
+            // It fidgets a bit
+            this.fidgetBase = rnd(1, 0.2);
+            // Most are closer to younger, so prnd.
+            this.age = prnd(0, 1);
+            // Uniform averaging distribution.
+            this.aging = Math.random();
+        }
+
+            /**
+             * Assume a slight exponential decay in the mass - not completely
+             * unwarranted, since this represents loss of atmosphere, energy,
+             * and other lyfecycle things.
+             */
+            Star.prototype.mass = function(t){
+                // Apply exponential decay on the initial mass
+                var time = (t + this.age) * this.aging;
+                return fidget(this.iMass * Math.pow(Math.E, -time), this.fidgetBase);
+            }
+
+            /**
+             * The temperature now just fidgets along some defined linear path.
+             * It "looks" "mostly" correct, and is a scale from mass to temperature.
+             */
+            Star.prototype.temperature = (function(){
+                var scale = Scales.linear(0, 25, 2300, 35000);
+                return function(t){
+                    return fidget(scale(this.mass(t)), this.fidgetBase);
+                };
+            }());
+
+            /**
+             * Magnitude is same as temperature - mass to mag on a linear scale.
+             */
+            Star.prototype.magnitude = (function(){
+                var scale = Scales.linear(0.1, 55, 20, -10);
+                return function(t){
+                    return fidget(scale(this.mass(t)), this.fidgetBase);
+                };
+            }());
+
+            /**
+             * Luminosity and size calculation are the same.
+             */
+            Star.prototype.luminosity = function(t){
+                return Math.pow(Math.E, ((this.magnitude(t) + 2.72)/-2.5));
+            };
+            Star.prototype.size = (function(){
+                var STEFAN_BOLTZMAN_CONSTANT = 5.670373e-8
+                var CONSTANT = 4 * Math.PI * STEFAN_BOLTZMAN_CONSTANT
+                return function(t){
+                    return Math.sqrt((this.luminosity(t)) / (CONSTANT * Math.pow(this.temperature(t), 4)))
+                };
+            }());
+
+
+        /**
+         * A Hydrogen star is a star, which tweaks the scales for
+         * temperature and magnitude.
+         */
+        function HydrogenStar(){
+            Star.call(this, rnd(1, 0.1) * 55);
+        }
+            HydrogenStar.prototype = Object.create(Star.prototype);
+
+            HydrogenStar.prototype.temperature = (function(){
+                var scale = Scales.linear(0, 55, 2300, 25000);
+                return function(t){
+                    return fidget(scale(this.mass(t)), this.fidgetBase);
+                };
+            }());
+
+            HydrogenStar.prototype.magnitude = (function(){
+                var scale = Scales.linear(0, 55, 16, -6);
+                return function(t){
+                    return fidget(scale(this.mass(t)), this.fidgetBase);
+                };
+            }());
+
+
+        angular.module('HertzRuss', ['Scale'])
+        .constant('starCount', 200); // How many stars?
+    </script>
+</head>
+<body ng-app="HertzRuss">
+    <svg
+        id="star"
+        version="1.1"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+    >
+        <defs>
+            <!-- Can't externalize filters in Webkit or Blink, but can in Gecko. #ThanksMozilla -->
+            <filter id="glow_large" x="-100%" y="-100%" width="300%" height="300%"> <feGaussianBlur in="SourceGraphic" stdDeviation="16" result="lightBlur" /> <feSpecularLighting surfaceScale="32" specularConstant=".25"specularExponent="4" lighting-color="#bbbbbb"in="lightBlur" result="highlight"> <fePointLight x="0" y="0" z="1000"/> </feSpecularLighting> <feComposite in="highlight" in2="SourceAlpha" operator="in" result="highlight" /> <feComposite in="SourceGraphic" in2="highlight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="highlighted"/> <feComposite in="highlighted" in2="lightBlur" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="star"/> <feGaussianBlur in="star" result="corona" stdDeviation="32" /> <feComposite in="corona" in2="SourceGraphic" operator="out" result="corona" /> <feComposite in="star" in2="corona" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="star" /> </filter>
+            <filter id="glow_medium" x="-100%" y="-100%" width="300%" height="300%"> <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="lightBlur" /> <feSpecularLighting surfaceScale="32" specularConstant=".25"specularExponent="4" lighting-color="#999999"in="lightBlur" result="highlight"> <fePointLight x="0" y="0" z="1000"/> </feSpecularLighting> <feComposite in="highlight" in2="SourceAlpha" operator="in" result="highlight"/> <feComposite in="SourceGraphic" in2="highlight" operator="arithmetic" k1="1" k2="1" k3="1" k4="0" result="highlighted"/> <feComposite in="highlighted" in2="lightBlur" operator="arithmetic" k1="1" k2="1" k3="1" k4="0" result="star"/> <feGaussianBlur in="star" result="corona" stdDeviation="4" /> <feComposite in="corona" in2="SourceGraphic" operator="out" result="corona" /> <feComposite in="star" in2="corona" operator="arithmetic" k1="1" k2="1" k3="1" k4="0" result="star"/> </filter>
+            <filter id="glow_small" x="-100%" y="-100%" width="300%" height="300%"> <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="lightBlur" /> <feSpecularLighting surfaceScale="8" specularConstant=".1"specularExponent="2" lighting-color="#ddddff"in="lightBlur" result="highlight"> <fePointLight x="0" y="0" z="20000"/> </feSpecularLighting> <feComposite in="highlight" in2="SourceAlpha" operator="in" result="highlight"/> <feComposite in="SourceGraphic" in2="highlight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="highlighted"/> <feComposite in="highlighted" in2="lightBlur" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="star"/> <feGaussianBlur in="star" result="corona" stdDeviation="2" /> <feComposite in="corona" in2="SourceGraphic" operator="out" result="corona" /> <feComposite in="star" in2="corona" operator="arithmetic" k1="1" k2="1" k3="1" k4="0" result="star"/> </filter>
+        </defs>
+
+        <g ng-controller="Cluster as cluster"
+            track-scales="{
+                x: ['linear', 37000, 0],
+                y: ['linear', -7, 18],
+                color: ['threshold',
+                    [        2200,     4100,     5000,     7500,    10000,    21000,   33000],
+                    ['#d20033','#ffbd6f','#ffddb4','#fff4e8','#fbf8ff','#cad8ff','#aabfff','#9db4ff']
+                ],
+                size: ['linear', 2.35e-7, 2.09932e-4, 3, 30],
+                filter: [ 'threshold',
+                    [ 1e-5, 1e-4 ], ['small', 'medium', 'large']
+                ]
+            }"
+           ng-init="t = 3"
+           > <!-- Set an initial simulation age -->
+                <g ng-repeat="star in cluster.stars"
+                    ng-attr-style="-webkit-transform: translate(
+                        {{ star.temperature(t) | scale:$scales.x }}px,
+                        {{ star.magnitude(t) | scale:$scales.y }}px
+                    )"
+                >
+                    <circle
+                            cx="0" cy="0"
+                            ng-attr-fill="{{ star.temperature(t) | scale:$scales.color }}"
+                            ng-attr-r="{{ star.size(t) | scale:$scales.size }}"
+
+                            ng-attr-filter="url(#glow_{{ star.size(t) | scale:$scales.filter }})"
+                            />
+                </g>
+            </g>
+    </svg>
+</body>
+</html>

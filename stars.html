@@ -2,11 +2,10 @@
 <html>
 <head>
     <meta chartype="utf-8" />
-    <title>Angular Stars</title>
+    <title>Angular to the Stars</title>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.12/angular.min.js"></script>
     <script>
-    function Cluster(){
-        this.stars = [
+    var localCluster = [
             {name: "40 Eridani A", magnitude: 6.0, temperature: 4900},
             {name: "40 Eridani B", magnitude: 11.1, temperature: 10000},
             {name: "40 Eridani C", magnitude: 12.8, temperature: 2940},
@@ -102,7 +101,10 @@
             {name: "Wolf 359 (CN Leo)", magnitude: 16.7, temperature: 2670},
             {name: "Wolf 424 A", magnitude: 15.0, temperature: 2670},
             {name: "YZ Ceti", magnitude: 14.1, temperature: 2670}
-        ].map(function(details){
+        ];
+
+    function Cluster(starList){
+        this.stars = starList.map(function(details){
             return new Star(details);
         });
     };
@@ -125,6 +127,11 @@
                 return position;
                 // return x + (((z + a) / (b - a)) * (y - x));
             };
+        },
+        threshold: function(domain, range){
+            return function FindThreshold(z){
+
+            }
         }
     };
 
@@ -136,6 +143,7 @@
 
     // Prepare spectroscope for spectrography!
     function Spectroscope(){
+        var this_ = this;
         this.classes = ['L', 'M', 'K', 'G', 'F', 'A', 'B', 'O'];
         this.temps = [2000, 3700, 5200, 6000, 7500, 10000, 33000, 999999]
         this.colors = [ '#d20033', '#ffbd6f', '#ffddb4', '#fff4e8', '#fbf8ff', '#cad8ff', '#aabfff', '#9db4ff' ]
@@ -148,27 +156,50 @@
                 color: this.colors[i]
             });
         }
+
+        this.color = function SpectroscopeColor(k) {
+            var i = -1, spec = null;
+            do {
+                spec = this_.spectro[++i];
+            } while(i < 8 && spec.temp < k);
+            return spec.color || "#000000";
+        };
+
+        this.class = function SpectroscopeClass(k) {
+            var i = -1, spec = null;
+            do {
+                spec = this_.spectro[++i];
+            } while(i < 8 && spec.temp < k);
+            return spec.class || "#000000";
+        };
     }
 
-    Spectroscope.prototype.color = function(k) {
-        var i = -1, spec = null;
-        do {
-            spec = this.spectro[++i];
-        } while(i < 8 && spec.temp < k);
-        return spec.color || "#000000";
-    };
-
-    Spectroscope.prototype.class = function(k) {
-        var i = -1, spec = null;
-        do {
-            spec = this.spectro[++i];
-        } while(i < 8 && spec.temp < k);
-        return spec.class || "#000000";
-    };
-
+    angular.module("HertzRuss", [])
+    .filter('scale', function(){
+        return function Scale(value, scale){
+            return scale(value);
+        }
+    })
+    .directive('ngvgScale', function($parse){
+        return {
+            link: function($scope, element, attrs){
+                var height = element[0].parentNode.offsetHeight;
+                var width = element[0].parentNode.offsetWidth;
+                $scope.scales = {};
+                var scales = $parse(attrs['ngvgScale'])();
+                for (var name in scales) {
+                    var scale = scales[name];
+                    var type = scale.shift();
+                    var maxima = {x: width, y: height}[name] || scale[2] || ((width + height) / 2);
+                    $scope.scales[name] = Scales[type](scale[0], scale[1], 0, maxima);
+                }
+            }
+        }
+    })
+    ;
     </script>
 </head>
-<body ng-app>
+<body ng-app="HertzRuss">
     <svg
         id="star"
         width="500"
@@ -176,16 +207,22 @@
         xmlns="http://www.w3.org/2000/svg"
         version="1.1"
         xmlns:xlink="http://www.w3.org/1999/xlink"
-        ng-controller="ScaleCtrl as scales"
         style="background: black;"
         >
         <g
-            ng-controller="Cluster as cluster">
+            ng-controller="Cluster as cluster" ngvg-scale="{
+                x: ['linear', 40000, 0],
+                y: ['linear', -10, 20],
+                color: ['threshold',
+                    [     2000,     3700,     5200,     6000,     7500,    10000,    33000,   999999],
+                    ['#d20033','#ffbd6f','#ffddb4','#fff4e8','#fbf8ff','#cad8ff','#aabfff','#9db4ff']
+                ]
+            }">
             <circle
                 ng-repeat="star in cluster.stars"
-                ng-attr-cx="{{scales.x(star.temperature)}}"
-                ng-attr-cy="{{scales.y(star.magnitude)}}"
-                ng-attr-fill="{{scales.spectroscope.color(star.temperature)}}"
+                ng-attr-cx="{{ star.temperature | scale:scales.x }}"
+                ng-attr-cy="{{ star.magnitude | scale:scales.y }}"
+                ng-attr-fill="{{ star.temperature | scale:scales.color }}
                 r="5" />
         </g>
     </svg>

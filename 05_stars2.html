@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <!--
 
-The glow doesn't quite work for all the stars, but we've got that awesome quantized scale...
+The glow doesn't quite work for all the stars, but we've got that awesome quantized scale.
+We'll use it to choose one of several hand-built filters.
 
 -->
 <html>
@@ -11,7 +12,9 @@ The glow doesn't quite work for all the stars, but we've got that awesome quanti
     <link type="text/css" rel="stylesheet" href="style.css" />
     <script src="angular.min.js"></script>
     <script src="localCluster.js"></script>
+
     <!-- Pull out all the same JS -->
+
     <script src="cluster.js"></script>
     <script src="scales.js"></script>
     <script src="hertzRuss.js"></script>
@@ -28,13 +31,7 @@ The glow doesn't quite work for all the stars, but we've got that awesome quanti
 
             <filter id="glow_large" x="-100%" y="-100%" width="300%" height="300%">
                 <feGaussianBlur in="SourceGraphic" stdDeviation="16" result="lightBlur" />
-                <feSpecularLighting
-                    surfaceScale="32" specularConstant=".25"
-                    specularExponent="4" lighting-color="#bbbbbb"
-                    in="lightBlur" result="highlight"
-                >
-                    <fePointLight x="0" y="0" z="1000"/>
-                </feSpecularLighting>
+                <feSpecularLighting surfaceScale="32" specularConstant=".25"specularExponent="4" lighting-color="#bbbbbb"in="lightBlur" result="highlight"> <fePointLight x="0" y="0" z="1000"/> </feSpecularLighting>
                 <feComposite in="highlight" in2="SourceAlpha" operator="in" result="highlight" />
                 <feComposite in="SourceGraphic" in2="highlight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="highlighted"/>
                 <feComposite in="highlighted" in2="lightBlur" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="star"/>
@@ -45,15 +42,8 @@ The glow doesn't quite work for all the stars, but we've got that awesome quanti
 
             <filter id="glow_medium" x="-100%" y="-100%" width="300%" height="300%">
                 <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="lightBlur" />
-                <feSpecularLighting
-                    surfaceScale="32" specularConstant=".25"
-                    specularExponent="4" lighting-color="#999999"
-                    in="lightBlur" result="highlight"
-                >
-                    <fePointLight x="0" y="0" z="1000"/>
-                </feSpecularLighting>
-                <feComposite in="highlight" in2="SourceAlpha" operator="in" result="highlight"
-                />
+                <feSpecularLighting surfaceScale="32" specularConstant=".25"specularExponent="4" lighting-color="#999999"in="lightBlur" result="highlight"> <fePointLight x="0" y="0" z="1000"/> </feSpecularLighting>
+                <feComposite in="highlight" in2="SourceAlpha" operator="in" result="highlight"/>
                 <feComposite in="SourceGraphic" in2="highlight" operator="arithmetic" k1="1" k2="1" k3="1" k4="0" result="highlighted"/>
                 <feComposite in="highlighted" in2="lightBlur" operator="arithmetic" k1="1" k2="1" k3="1" k4="0" result="star"/>
                 <feGaussianBlur in="star" result="corona" stdDeviation="4" />
@@ -64,18 +54,10 @@ The glow doesn't quite work for all the stars, but we've got that awesome quanti
 
             <filter id="glow_small" x="-100%" y="-100%" width="300%" height="300%">
                 <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="lightBlur" />
-                <feSpecularLighting
-                    surfaceScale="8" specularConstant=".1"
-                    specularExponent="2" lighting-color="#ddddff"
-                    in="lightBlur" result="highlight"
-                >
-                    <fePointLight x="0" y="0" z="20000"/>
-                </feSpecularLighting>
-                <feComposite in="highlight" in2="SourceAlpha" operator="in" result="highlight"
-                />
+                <feSpecularLighting surfaceScale="8" specularConstant=".1"specularExponent="2" lighting-color="#ddddff"in="lightBlur" result="highlight"> <fePointLight x="0" y="0" z="20000"/> </feSpecularLighting>
+                <feComposite in="highlight" in2="SourceAlpha" operator="in" result="highlight"/>
                 <feComposite in="SourceGraphic" in2="highlight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="highlighted"/>
                 <feComposite in="highlighted" in2="lightBlur" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="star"/>
-
                 <feGaussianBlur in="star" result="corona" stdDeviation="2" />
                 <feComposite in="corona" in2="SourceGraphic" operator="out" result="corona" />
                 <feComposite in="star" in2="corona" operator="arithmetic" k1="1" k2="1" k3="1" k4="0" result="star"

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta chartype="utf-8" />
+    <title>Remote Filter Loading</title>
+</head>
+<body>
+    <svg
+        id="blurs"
+        version="1.1"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+    >
+        <defs>
+            <use xlink:href="filters.svg#blur"></use>
+        </defs>
+
+        <circle cx="50" cy="50" fill="red" r="25"
+            style="filter:url(filters.svg#blur)"
+        />
+
+        <circle cx="100" cy="50" fill="red" r="25"
+            filter="url(#blur)"
+        />
+    </svg>
+</body>
+</html>

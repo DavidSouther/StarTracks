@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<!--
+-->
+<html>
+<head>
+    <meta chartype="utf-8" />
+    <title>Angular to the Stars</title>
+    <link type="text/css" rel="stylesheet" href="style.css" />
+    <script src="angular.js"></script>
+    <script src="tracks.js"></script>
+    <script src="d3.stolen.js"></script>
+    <script>
+        function Cluster($scope, starCount){
+            starCount = starCount || 200;
+            var sunsCount = starCount * 0.75;
+            var dwarfsCount = starCount * 0.2
+            var giantsCount = starCount * 0.05;
+            this.stars = [];
+            while(sunsCount-- > 0){
+                this.stars.push(new HydrogenStar());
+            }
+            while(giantsCount-- > 0){
+                this.stars.push(new HeliumStar());
+            }
+            while(dwarfsCount-- > 0){
+                this.stars.push(new WhiteDwarfStar());
+            }
+
+            var this_ = this;
+            $scope.simulate = function(t){
+                this_.simulate(t);
+            };
+        };
+
+        Cluster.prototype.simulate = function(t){
+            for(var i = 0 , q = this.stars.length ; i < q ; i++){
+                this.stars[i].simulate(t);
+            }
+        }
+
+        window.LocalCluster = function LocalCluster($scope, starCount){
+            Cluster.call(this, $scope, starCount);
+        }
+        window.LocalCluster.prototype = Object.create(Cluster.prototype);
+
+        function fidget(num, base){
+            base = base || Math.random();
+            var tenthNum = num * 0.1;
+            var halfTenthNum = tenthNum * 0.5;
+            return num + ((base * tenthNum) - halfTenthNum);
+        }
+
+
+
+        // poor-man's gaussian
+        function rnd_snd() {
+            return (Math.random()*2-1)+(Math.random()*2-1)+(Math.random()*2-1);
+        }
+        function rnd(mean, stdev) {
+            return rnd_snd() * stdev + mean;
+        }
+        function rnd_pnd() {
+            return (Math.random()*2-1)*(Math.random()*2-1)*(Math.random()*2-1);
+        }
+        function prnd(mean, stdev) {
+            return rnd_pnd() * stdev + mean;
+        }
+
+
+
+        function Star(iMass){
+            this.fidgetBase = rnd(1, 0.2);
+            this.iMass = iMass;
+            this.age = prnd(0, 1);
+            this.aging = Math.random();
+            this.simulate(1);
+        }
+
+            Star.prototype.simulate = function(t){
+                // Order is important
+                this.doMass(t);
+                this.doTemperature(t);
+                this.doMagnitude(t);
+                this.doLuminosity(t);
+                this.doSize(t);
+            }
+
+            Star.prototype.doMass = function(t){
+                var time = (t + this.age) * this.aging;
+                this.mass = fidget(this.iMass * Math.pow(Math.E, -time), this.fidgetBase);
+            }
+
+            Star.prototype.doLuminosity = function(t){
+                this.luminosity = Math.pow(Math.E, ((this.magnitude + 2.72)/-2.5));
+            };
+
+            Star.prototype.doSize = (function(){
+                var STEFAN_BOLTZMAN_CONSTANT = 5.670373e-8
+                var CONSTANT = 4 * Math.PI * STEFAN_BOLTZMAN_CONSTANT
+                return function(t){
+                    this.size = Math.sqrt(this.luminosity / (CONSTANT * Math.pow(this.temperature, 4)))
+                };
+            }());
+
+        function HydrogenStar(){
+            Star.call(this, rnd(1, 0.1) * 55);
+        }
+            HydrogenStar.prototype = Object.create(Star.prototype);
+
+            HydrogenStar.prototype.doTemperature = (function(){
+                var scale = Scales.linear(0, 55, 2300, 25000);
+                return function(t){
+                    this.temperature = fidget(scale(this.mass), this.fidgetBase);
+                };
+            }());
+
+            HydrogenStar.prototype.doMagnitude = (function(){
+                var scale = Scales.linear(0, 55, 16, -6);
+                return function(t){
+                    this.magnitude = fidget(scale(this.mass), this.fidgetBase);
+                };
+            }());
+
+
+        function HeliumStar(){
+            Star.call(this, rnd(20, 5));
+        }
+            HeliumStar.prototype = Object.create(Star.prototype);
+
+            HeliumStar.prototype.doTemperature = (function(){
+                var scale = Scales.linear(0, 55, 2300, 15000);
+                return function(t){
+                    this.temperature = fidget(scale(this.mass), this.fidgetBase);
+                };
+            }());
+
+            HeliumStar.prototype.doMagnitude = (function(){
+                var scale = Scales.linear(0, 55, -6, 0);
+                return function(t){
+                    this.magnitude = fidget(scale(this.mass), this.fidgetBase);
+                };
+            }());
+
+
+        function WhiteDwarfStar(){
+            Star.call(this, rnd(20, 5));
+        }
+            WhiteDwarfStar.prototype = Object.create(Star.prototype);
+
+            WhiteDwarfStar.prototype.doTemperature = (function(){
+                var scale = Scales.linear(0, 55, 15000, 35000);
+                return function(t){
+                    this.temperature = fidget(scale(this.mass), this.fidgetBase);
+                };
+            }());
+
+            WhiteDwarfStar.prototype.doMagnitude = (function(){
+                var scale = Scales.linear(0, 55, 16, 10);
+                return function(t){
+                    this.luminosity = fidget(scale(this.mass), this.fidgetBase);
+                };
+            }());
+
+        angular.module('HertzRuss', ['Scale'])
+        .constant('starCount', 200)
+        .directive('scroll', function($document, $window, $parse){
+            return function(scope, $element, attrs) {
+                var scale = Scales.log(0, 50, 0, 3);
+                $document.bind("mousewheel", function(ev){
+                    scope[attrs.scrollvar] = scope[attrs.scrollvar] - ev.wheelDelta / 100;
+                    scope[attrs.scrollvar] = Math.max(0, scope[attrs.scrollvar]);
+
+                    var action = $parse(attrs.scroll);
+                    action(scope);
+
+                    scope.$apply();
+                    ev.preventDefault();
+                });
+            };
+        });
+    </script>
+</head>
+<body ng-app="HertzRuss">
+    <svg
+        id="star"
+        version="1.1"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+    >
+        <g ng-controller="LocalCluster as cluster"
+            track-scales="{
+                x: ['linear', 37000, 0],
+                y: ['linear', -7, 18],
+                color: ['threshold',
+                    [        3600,     5100,     6000,     7500,    10000,    21000,   33000],
+                    ['#d20033','#ffbd6f','#ffddb4','#fff4e8','#fbf8ff','#cad8ff','#aabfff','#9db4ff']
+                ],
+                size: ['linear', 2.35e-7, 2.09932e-4, 3, 30],
+                filter: [ 'threshold',
+                    [ 1e-5, 1e-4 ], ['small', 'medium', 'large']
+                ]
+            }"
+           ng-init="t = 1"
+           scroll="simulate(t)"
+           scrollVar="t"
+           >
+                <g ng-repeat="star in cluster.stars"
+                    ng-attr-style="-webkit-transform: translate(
+                        {{ star.temperature | scale:$scales.x }}px,
+                        {{ star.magnitude | scale:$scales.y }}px
+                    )"
+                >
+                    <circle
+                            cx="0" cy="0"
+                            ng-attr-fill="{{ star.temperature | scale:$scales.color }}"
+                            ng-attr-r="{{ star.size | scale:$scales.size }}"
+
+                            />
+                            <!-- ng-attr-filter="url(#glow_{{ star.size(t) | scale:$scales.filter }})" -->
+                </g>
+            </g>
+    </svg>
+</body>
+</html>

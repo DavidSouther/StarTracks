@@ -21,6 +21,17 @@ window.Scales = {
             return linear(log10(z));
         }
     },
+    exponential: function(a, b, x, y, A){
+        function exp(z){
+           return Math.pow(z, A);
+        }
+        var linA = exp(a);
+        var linB = exp(b);
+        var linear = Scales.linear(linA, linB, x, y);
+        return function ScaleExp(z){
+            return linear(exp(z));
+        }
+    },
     threshold: function(domain, range){
         var buckets = domain.length;
         return function FindThreshold(z){
